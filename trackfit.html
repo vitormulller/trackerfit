@@ -274,6 +274,114 @@ canvas{width:100%;display:block}
 .modal-overlay.open .modal-sheet{transform:translateY(0)}
 .modal-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 18px}
 .modal-title{font-family:'Syne',sans-serif;font-weight:700;font-size:17px;margin-bottom:16px}
+
+/* ═══════════════════════════════════════
+   ASSISTENTE DE VOZ ← NOVO
+═══════════════════════════════════════ */
+.ai-fab{
+  position:fixed;
+  bottom:calc(var(--tab-h) + 72px);
+  right:16px;
+  width:48px;height:48px;
+  border-radius:50%;
+  background:var(--green);
+  color:#fff;
+  border:none;
+  font-size:20px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;
+  box-shadow:0 4px 16px rgba(42,110,42,.4);
+  z-index:50;
+  transition:transform .15s;
+}
+.ai-fab:active{transform:scale(.92)}
+.ai-fab.recording{animation:ai-pulse 1s infinite}
+@keyframes ai-pulse{0%,100%{box-shadow:0 4px 16px rgba(42,110,42,.4)}50%{box-shadow:0 4px 24px rgba(42,110,42,.8)}}
+
+.ai-overlay{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.45);
+  z-index:300;
+  display:flex;align-items:flex-end;
+  opacity:0;pointer-events:none;
+  transition:opacity .2s;
+}
+.ai-overlay.open{opacity:1;pointer-events:all}
+
+.ai-sheet{
+  background:var(--surface);
+  border-radius:20px 20px 0 0;
+  width:100%;max-width:430px;
+  margin:0 auto;
+  padding:18px 18px 32px;
+  transform:translateY(100%);
+  transition:transform .25s;
+}
+.ai-overlay.open .ai-sheet{transform:translateY(0)}
+
+.ai-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 14px}
+
+.ai-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.ai-title{font-family:'Syne',sans-serif;font-weight:700;font-size:16px;flex:1}
+.ai-close{background:var(--surface2);border:none;border-radius:50%;width:28px;height:28px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+
+.ai-msgs{max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:14px;scrollbar-width:none}
+.ai-msgs::-webkit-scrollbar{display:none}
+
+.ai-bubble{padding:9px 13px;border-radius:14px;font-size:13px;line-height:1.45;max-width:90%}
+.ai-bubble.user{background:var(--green);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.ai-bubble.bot{background:var(--surface2);color:var(--text);align-self:flex-start;border-bottom-left-radius:4px;border:1px solid var(--border)}
+.ai-bubble.thinking{background:var(--surface2);border:1px solid var(--border);align-self:flex-start;display:flex;gap:4px;align-items:center;padding:12px 14px}
+
+.ai-dot{width:5px;height:5px;border-radius:50%;background:var(--text3);animation:ai-bounce 1.1s infinite}
+.ai-dot:nth-child(2){animation-delay:.18s}
+.ai-dot:nth-child(3){animation-delay:.36s}
+@keyframes ai-bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+
+.ai-input-row{display:flex;gap:8px;align-items:center}
+.ai-input{
+  flex:1;
+  background:var(--surface2);
+  border:1.5px solid var(--border2);
+  border-radius:24px;
+  padding:10px 14px;
+  font-family:'DM Sans',sans-serif;
+  font-size:14px;
+  color:var(--text);
+  outline:none;
+}
+.ai-input:focus{border-color:var(--green-mid)}
+.ai-input.listening{border-color:var(--red);animation:ai-listen .9s infinite}
+@keyframes ai-listen{0%,100%{border-color:var(--red)}50%{border-color:#f08060}}
+
+.ai-mic{
+  width:42px;height:42px;border-radius:50%;border:none;
+  background:var(--surface2);color:var(--text2);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;flex-shrink:0;font-size:18px;
+  border:1.5px solid var(--border2);
+  transition:all .15s;
+}
+.ai-mic.on{background:var(--red-lt);color:var(--red);border-color:var(--red)}
+
+.ai-send{
+  width:42px;height:42px;border-radius:50%;
+  background:var(--green);color:#fff;border:none;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;flex-shrink:0;
+  transition:transform .15s;
+}
+.ai-send:active{transform:scale(.9)}
+.ai-send:disabled{opacity:.4}
+
+.ai-suggestions{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.ai-sug{
+  padding:5px 11px;border-radius:16px;
+  background:var(--surface2);border:1px solid var(--border2);
+  font-size:12px;color:var(--text2);cursor:pointer;
+  transition:all .15s;white-space:nowrap;
+}
+.ai-sug:active{background:var(--green-lt);border-color:var(--green);color:var(--green)}
 </style>
 </head>
 <body>
@@ -592,6 +700,39 @@ canvas{width:100%;display:block}
   </div>
 </div>
 
+<!-- ═══════════════════════════════════════
+     ASSISTENTE DE VOZ — BOTÃO FLUTUANTE
+═══════════════════════════════════════ -->
+<button class="ai-fab" id="ai-fab" onclick="openAI()" title="Assistente de voz">🎙️</button>
+
+<!-- ASSISTENTE — PAINEL -->
+<div class="ai-overlay" id="ai-overlay" onclick="closeAIOverlay(event)">
+  <div class="ai-sheet">
+    <div class="ai-handle"></div>
+    <div class="ai-header">
+      <div class="ai-title">🤖 Assistente TrackFit</div>
+      <button class="ai-close" onclick="closeAI()">✕</button>
+    </div>
+    <div class="ai-suggestions" id="ai-suggestions">
+      <span class="ai-sug" onclick="aiSuggest(this)">➕ Adicionar tarefa</span>
+      <span class="ai-sug" onclick="aiSuggest(this)">🛒 Adicionar compra</span>
+      <span class="ai-sug" onclick="aiSuggest(this)">📋 Ver tarefas pendentes</span>
+      <span class="ai-sug" onclick="aiSuggest(this)">🛒 Ver lista de compras</span>
+    </div>
+    <div class="ai-msgs" id="ai-msgs"></div>
+    <div class="ai-input-row">
+      <input class="ai-input" id="ai-input" placeholder="Digite ou use o microfone..."
+        onkeydown="if(event.key==='Enter')aiSend()">
+      <button class="ai-mic" id="ai-mic" onclick="aiToggleVoice()" title="Gravar voz">🎙️</button>
+      <button class="ai-send" id="ai-send" onclick="aiSend()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ══════════════════════════════════════════════════════════════
 // SUPABASE CLIENT
@@ -599,7 +740,6 @@ canvas{width:100%;display:block}
 const SB_URL = 'https://hlpcohnvcbsjzfkxtvgs.supabase.co';
 const SB_KEY = 'sb_publishable_JUf4_Z56mJ0EHtMC61c4bQ_6pMSwE9C';
 
-// Usa XMLHttpRequest para evitar bloqueio CORS em file:// no iOS
 function sbRequest(method, path, body) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
@@ -800,7 +940,7 @@ const GROCERY_CATS = {
 // INIT
 // ══════════════════════════════════════════════════════════════
 let currentDay = DAYS[0];
-let currentDietDay = 0; // 0=weekday, 1=weekend
+let currentDietDay = 0;
 let currentWeek = getWeek();
 let weeklyData = load('tf_weekly', []);
 let workoutLogs = load('tf_workout', {});
@@ -942,7 +1082,6 @@ function saveExercise(key, exName) {
   if (!workoutLogs[today]) workoutLogs[today] = {};
   workoutLogs[today][key] = { load: parseFloat(load)||null, repsActual, setsActual, ts: Date.now() };
 
-  // Update PR store
   if (load) {
     const prs = load('tf_prs', {});
     if (!prs[exName] || parseFloat(load) > prs[exName]) {
@@ -1000,7 +1139,6 @@ function buildMeals() {
     if (checked[m.id]) { totalK+=m.kcal; totalP+=m.prot; totalC+=m.carbo; totalG+=m.gord; }
   });
 
-  // Update summary
   const sd = document.getElementById('diet-summary');
   const items = sd.querySelectorAll('.diet-sum-val');
   items[0].textContent = totalK;
@@ -1087,7 +1225,6 @@ function buildSupplements() {
         ${!isToday?'<div class="supp-not-today-lbl">Não programado para hoje</div>':'<div class="supp-dose" style="font-size:10.5px;color:var(--text3)">${s.when}</div>'}
       </div>
       <div class="supp-check">${isTaken?'✓':''}</div>`;
-    // Fix the when label since template literal inside template literal needs escaping
     const doseDiv = div.querySelectorAll('.supp-dose');
     if(doseDiv.length>1) doseDiv[1].textContent = s.when;
     c.appendChild(div);
@@ -1107,7 +1244,7 @@ function toggleSupp(id) {
 // ══════════════════════════════════════════════════════════════
 // COMPRAS — SUPABASE
 // ══════════════════════════════════════════════════════════════
-let groceryCache = {}; // item -> {id, checked, leftover}
+let groceryCache = {};
 let ameixaAdded = load('tf_ameixa', false);
 
 async function loadGrocery() {
@@ -1189,7 +1326,6 @@ function getAllGroceryItems() {
 async function toggleGrocery(item) {
   const d = groceryCache[item] || {};
   const newVal = !d.checked;
-  // Optimistic UI
   groceryCache[item] = {...d, checked:newVal};
   renderGrocery();
 
@@ -1272,7 +1408,6 @@ function renderTasks() {
   else if(taskFilter === 'Alta') tasks = tasks.filter(t=>t.priority==='Alta');
   else if(taskFilter === 'Média') tasks = tasks.filter(t=>t.priority==='Média');
 
-  // Sort: pendentes primeiro, depois por prioridade
   const priOrd = {Alta:0,Média:1,Baixa:2};
   tasks.sort((a,b)=>{
     if(a.status==='Feito' && b.status!=='Feito') return 1;
@@ -1337,7 +1472,6 @@ function fmtDate(d) {
   return `${day}/${m}`;
 }
 
-// Task modal
 let editingTaskId = null;
 
 function openTaskModal(id) {
@@ -1465,7 +1599,6 @@ function drawChart(id, data, key, unit) {
   const scX=i=>(W-padL-padR)/(pts.length-1)*i+padL;
   const scY=v=>padT+(1-(v-minV)/(maxV-minV))*(H-padT-padB);
 
-  // Grid
   ctx.strokeStyle='rgba(0,0,0,.05)'; ctx.lineWidth=1;
   [0,.5,1].forEach(r=>{
     const y=padT+r*(H-padT-padB);
@@ -1474,24 +1607,20 @@ function drawChart(id, data, key, unit) {
     ctx.fillText((minV+(maxV-minV)*(1-r)).toFixed(1),padL-4,y+3);
   });
 
-  // Line
   ctx.beginPath(); ctx.moveTo(scX(0),scY(pts[0].y));
   pts.forEach((p,i)=>{ if(i>0) ctx.lineTo(scX(i),scY(p.y)); });
   ctx.strokeStyle='#2a6e2a'; ctx.lineWidth=2.5; ctx.lineJoin='round'; ctx.stroke();
 
-  // Fill
   ctx.beginPath(); ctx.moveTo(scX(0),scY(pts[0].y));
   pts.forEach((p,i)=>{ if(i>0) ctx.lineTo(scX(i),scY(p.y)); });
   ctx.lineTo(scX(pts.length-1),H-padB); ctx.lineTo(scX(0),H-padB); ctx.closePath();
   ctx.fillStyle='rgba(42,110,42,.08)'; ctx.fill();
 
-  // Dots
   pts.forEach((p,i)=>{
     ctx.beginPath(); ctx.arc(scX(i),scY(p.y),3.5,0,Math.PI*2);
     ctx.fillStyle='#2a6e2a'; ctx.fill();
   });
 
-  // X labels
   ctx.fillStyle='#a0a0a0'; ctx.font='9px DM Mono,monospace'; ctx.textAlign='center';
   pts.forEach((p,i)=>{ if(i===0||i===pts.length-1||pts.length<=6) ctx.fillText(p.lbl,scX(i),H-padB+13); });
 }
@@ -1562,6 +1691,194 @@ function showToast(msg) {
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'), 2400);
+}
+
+// ══════════════════════════════════════════════════════════════
+// ASSISTENTE DE VOZ — LÓGICA
+// ══════════════════════════════════════════════════════════════
+let aiRecognition = null;
+let aiIsRecording = false;
+let aiMsgs = [];
+
+function openAI() {
+  document.getElementById('ai-overlay').classList.add('open');
+  document.getElementById('ai-input').focus();
+}
+
+function closeAI() {
+  document.getElementById('ai-overlay').classList.remove('open');
+  if(aiIsRecording && aiRecognition) aiRecognition.stop();
+}
+
+function closeAIOverlay(e) {
+  if(e.target.id === 'ai-overlay') closeAI();
+}
+
+function aiSuggest(el) {
+  document.getElementById('ai-input').value = el.textContent.replace(/^[^\s]+\s/,'');
+  document.getElementById('ai-input').focus();
+}
+
+function aiToggleVoice() {
+  if(!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+    aiAddMsg('bot', '⚠️ Seu navegador não suporta reconhecimento de voz. Use o Chrome.');
+    return;
+  }
+  if(aiIsRecording) { aiRecognition && aiRecognition.stop(); return; }
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  aiRecognition = new SR();
+  aiRecognition.lang = 'pt-BR';
+  aiRecognition.continuous = false;
+  aiRecognition.interimResults = false;
+
+  aiRecognition.onstart = () => {
+    aiIsRecording = true;
+    document.getElementById('ai-mic').classList.add('on');
+    document.getElementById('ai-input').classList.add('listening');
+    document.getElementById('ai-input').placeholder = '🎙️ Ouvindo...';
+    document.getElementById('ai-fab').classList.add('recording');
+  };
+
+  aiRecognition.onresult = (e) => {
+    const text = e.results[0][0].transcript;
+    document.getElementById('ai-input').value = text;
+    aiSend();
+  };
+
+  aiRecognition.onerror = () => {
+    aiAddMsg('bot', '⚠️ Erro no microfone. Tente novamente.');
+  };
+
+  aiRecognition.onend = () => {
+    aiIsRecording = false;
+    document.getElementById('ai-mic').classList.remove('on');
+    document.getElementById('ai-input').classList.remove('listening');
+    document.getElementById('ai-input').placeholder = 'Digite ou use o microfone...';
+    document.getElementById('ai-fab').classList.remove('recording');
+  };
+
+  aiRecognition.start();
+}
+
+function aiAddMsg(role, text) {
+  aiMsgs.push({role, text});
+  const area = document.getElementById('ai-msgs');
+  const sug = document.getElementById('ai-suggestions');
+  if(sug) sug.style.display = 'none';
+
+  const b = document.createElement('div');
+  b.className = 'ai-bubble ' + role;
+  b.textContent = text;
+  area.appendChild(b);
+  area.scrollTop = area.scrollHeight;
+  return b;
+}
+
+function aiAddThinking() {
+  const area = document.getElementById('ai-msgs');
+  const b = document.createElement('div');
+  b.className = 'ai-bubble thinking';
+  b.innerHTML = '<div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div>';
+  area.appendChild(b);
+  area.scrollTop = area.scrollHeight;
+  return b;
+}
+
+async function aiSend() {
+  const input = document.getElementById('ai-input');
+  const text = input.value.trim();
+  if(!text) return;
+  input.value = '';
+  document.getElementById('ai-send').disabled = true;
+
+  aiAddMsg('user', text);
+  const thinking = aiAddThinking();
+
+  try {
+    const systemPrompt = `Você é o assistente do TrackFit. Gerencie tarefas e lista de compras.
+Responda APENAS com JSON (sem markdown, sem backticks):
+{"action":"add_task"|"add_grocery"|"list_tasks"|"list_grocery"|"none","data":{...},"reply":"msg curta"}
+
+add_task: data={title,due_date(ISO ou null),priority("Alta"|"Média"|"Baixa"),category}
+add_grocery: data={item,category}
+list_tasks/list_grocery: data={}
+none: só reply
+
+Data atual: ${new Date().toISOString().slice(0,10)}`;
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 500,
+        system: systemPrompt,
+        messages: [{role:'user', content: text}]
+      })
+    });
+
+    const result = await res.json();
+    const raw = result.content?.[0]?.text || '{}';
+    let parsed;
+    try { parsed = JSON.parse(raw.replace(/```json|```/g,'').trim()); }
+    catch { parsed = {action:'none', reply: raw}; }
+
+    thinking.remove();
+    let replyExtra = '';
+
+    if(parsed.action === 'add_task') {
+      const data = {
+        title: parsed.data.title,
+        due_date: parsed.data.due_date || null,
+        priority: parsed.data.priority || 'Média',
+        category: parsed.data.category || 'Geral',
+        status: 'Pendente',
+        updated_at: new Date().toISOString()
+      };
+      const r = await sb.post('tasks', data);
+      if(r && r[0]) {
+        tasksCache.unshift(r[0]);
+        renderTasks();
+        replyExtra = ' ✅';
+      }
+    } else if(parsed.action === 'add_grocery') {
+      const data = {
+        week: currentWeek,
+        item: parsed.data.item,
+        category: parsed.data.category || 'Outros',
+        checked: false
+      };
+      const r = await sb.post('grocery_list', data);
+      if(r && r[0]) {
+        groceryCache[parsed.data.item] = {id: r[0].id, checked: false};
+        replyExtra = ' ✅';
+      }
+    } else if(parsed.action === 'list_tasks') {
+      const pending = tasksCache.filter(t=>t.status!=='Feito');
+      if(pending.length) {
+        parsed.reply = `${pending.length} tarefa(s) pendente(s):\n` +
+          pending.map(t=>`• ${t.title}${t.due_date?' ('+fmtDate(t.due_date)+')':''}`).join('\n');
+      } else {
+        parsed.reply = 'Nenhuma tarefa pendente! 🎉';
+      }
+    } else if(parsed.action === 'list_grocery') {
+      const rows = await sb.get('grocery_list', `week=eq.${currentWeek}&checked=eq.false&select=item`);
+      if(rows && rows.length) {
+        parsed.reply = `${rows.length} item(s) na lista:\n` + rows.map(r=>`• ${r.item}`).join('\n');
+      } else {
+        parsed.reply = 'Lista de compras vazia!';
+      }
+    }
+
+    aiAddMsg('bot', (parsed.reply || 'Feito!') + replyExtra);
+
+  } catch(e) {
+    thinking.remove();
+    aiAddMsg('bot', '⚠️ Erro de conexão. Tente novamente.');
+  }
+
+  document.getElementById('ai-send').disabled = false;
 }
 
 // ══════════════════════════════════════════════════════════════
